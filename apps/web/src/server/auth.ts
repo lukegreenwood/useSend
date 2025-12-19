@@ -1,8 +1,8 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import {
-  getServerSession,
-  type DefaultSession,
-  type NextAuthOptions,
+	getServerSession,
+	type DefaultSession,
+	type NextAuthOptions,
 } from "next-auth";
 import { type Adapter } from "next-auth/adapters";
 import GitHubProvider from "next-auth/providers/github";
@@ -21,25 +21,25 @@ import { db } from "~/server/db";
  * @see https://next-auth.js.org/getting-started/typescript#module-augmentation
  */
 declare module "next-auth" {
-  // eslint-disable-next-line no-unused-vars
-  interface Session extends DefaultSession {
-    user: {
-      id: number;
-      isBetaUser: boolean;
-      isAdmin: boolean;
-      isWaitlisted: boolean;
-      // ...other properties
-      // role: UserRole;
-    } & DefaultSession["user"];
-  }
+	// eslint-disable-next-line no-unused-vars
+	interface Session extends DefaultSession {
+		user: {
+			id: number;
+			isBetaUser: boolean;
+			isAdmin: boolean;
+			isWaitlisted: boolean;
+			// ...other properties
+			// role: UserRole;
+		} & DefaultSession["user"];
+	}
 
-  // eslint-disable-next-line no-unused-vars
-  interface User {
-    id: number;
-    isBetaUser: boolean;
-    isAdmin: boolean;
-    isWaitlisted: boolean;
-  }
+	// eslint-disable-next-line no-unused-vars
+	interface User {
+		id: number;
+		isBetaUser: boolean;
+		isAdmin: boolean;
+		isWaitlisted: boolean;
+	}
 }
 
 /**
@@ -47,52 +47,82 @@ declare module "next-auth" {
  */
 
 function getProviders() {
-  const providers: Provider[] = [];
+	const providers: Provider[] = [];
 
-  if (env.GITHUB_ID && env.GITHUB_SECRET) {
-    providers.push(
-      GitHubProvider({
-        clientId: env.GITHUB_ID,
-        clientSecret: env.GITHUB_SECRET,
-        allowDangerousEmailAccountLinking: true,
-        authorization: {
-          params: {
-            scope: "read:user user:email",
-          },
-        },
-      })
-    );
-  }
+	if (env.GITHUB_ID && env.GITHUB_SECRET) {
+		providers.push(
+			GitHubProvider({
+				clientId: env.GITHUB_ID,
+				clientSecret: env.GITHUB_SECRET,
+				allowDangerousEmailAccountLinking: true,
+				authorization: {
+					params: {
+						scope: "read:user user:email",
+					},
+				},
+			})
+		);
+	}
 
-  if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
-    providers.push(
-      GoogleProvider({
-        clientId: env.GOOGLE_CLIENT_ID,
-        clientSecret: env.GOOGLE_CLIENT_SECRET,
-        allowDangerousEmailAccountLinking: true,
-      })
-    );
-  }
+	if (env.GOOGLE_CLIENT_ID && env.GOOGLE_CLIENT_SECRET) {
+		providers.push(
+			GoogleProvider({
+				clientId: env.GOOGLE_CLIENT_ID,
+				clientSecret: env.GOOGLE_CLIENT_SECRET,
+				allowDangerousEmailAccountLinking: true,
+			})
+		);
+	}
 
-  if (env.FROM_EMAIL) {
-    providers.push(
-      EmailProvider({
-        from: env.FROM_EMAIL,
-        async sendVerificationRequest({ identifier: email, url, token }) {
-          await sendSignUpEmail(email, token, url);
-        },
-        async generateVerificationToken() {
-          return Math.random().toString(36).substring(2, 7).toLowerCase();
-        },
-      })
-    );
-  }
+	if (env.FROM_EMAIL) {
+		providers.push(
+			EmailProvider({
+				from: env.FROM_EMAIL,
+				async sendVerificationRequest({ identifier: email, url, token }) {
+					await sendSignUpEmail(email, token, url);
+				},
+				async generateVerificationToken() {
+					return Math.random().toString(36).substring(2, 7).toLowerCase();
+				},
+			})
+		);
+	}
 
-  if (providers.length === 0 && process.env.SKIP_ENV_VALIDATION !== "true") {
-    throw new Error("No auth providers found, need atleast one");
-  }
+	if (
+		env.OAUTH_PROVIDER_ID &&
+		env.OAUTH_PROVIDER_NAME &&
+		env.OAUTH_PROVIDER_CLIENT_ID &&
+		env.OAUTH_PROVIDER_CLIENT_SECRET &&
+		env.OAUTH_PROVIDER_WELL_KNOWN_URL
+	) {
+		providers.push({
+			id: env.OAUTH_PROVIDER_ID,
+			name: env.OAUTH_PROVIDER_NAME,
+			type: "oauth",
+			clientId: env.OAUTH_PROVIDER_CLIENT_ID,
+			clientSecret: env.OAUTH_PROVIDER_CLIENT_SECRET,
+			wellKnown: env.OAUTH_PROVIDER_WELL_KNOWN_URL,
+			authorization: { params: { scope: "openid email profile" } },
+			idToken: true,
+			checks: ["pkce", "state"],
+			profile(profile) {
+				return {
+					id: profile.sub,
+					name: profile.name,
+					email: profile.email,
+					isBetaUser: false,
+					isAdmin: false,
+					isWaitlisted: false,
+				};
+			},
+		});
+	}
 
-  return providers;
+	if (providers.length === 0 && process.env.SKIP_ENV_VALIDATION !== "true") {
+		throw new Error("No auth providers found, need atleast one");
+	}
+
+	return providers;
 }
 
 /**
@@ -101,52 +131,52 @@ function getProviders() {
  * @see https://next-auth.js.org/configuration/options
  */
 export const authOptions: NextAuthOptions = {
-  callbacks: {
-    session: ({ session, user }) => ({
-      ...session,
-      user: {
-        ...session.user,
-        id: user.id,
-        isBetaUser: user.isBetaUser,
-        isAdmin: user.email === env.ADMIN_EMAIL,
-        isWaitlisted: user.isWaitlisted,
-      },
-    }),
-  },
-  adapter: PrismaAdapter(db) as Adapter,
-  pages: {
-    signIn: "/login",
-  },
-  events: {
-    createUser: async ({ user }) => {
-      let invitesAvailable = false;
+	callbacks: {
+		session: ({ session, user }) => ({
+			...session,
+			user: {
+				...session.user,
+				id: user.id,
+				isBetaUser: user.isBetaUser,
+				isAdmin: user.email === env.ADMIN_EMAIL,
+				isWaitlisted: user.isWaitlisted,
+			},
+		}),
+	},
+	adapter: PrismaAdapter(db) as Adapter,
+	pages: {
+		signIn: "/login",
+	},
+	events: {
+		createUser: async ({ user }) => {
+			let invitesAvailable = false;
 
-      if (user.email) {
-        const invites = await db.teamInvite.findMany({
-          where: { email: user.email },
-        });
+			if (user.email) {
+				const invites = await db.teamInvite.findMany({
+					where: { email: user.email },
+				});
 
-        invitesAvailable = invites.length > 0;
-      }
+				invitesAvailable = invites.length > 0;
+			}
 
-      if (
-        !env.NEXT_PUBLIC_IS_CLOUD ||
-        env.NODE_ENV === "development" ||
-        invitesAvailable
-      ) {
-        await db.user.update({
-          where: { id: user.id },
-          data: { isBetaUser: true },
-        });
-      } else {
-        await db.user.update({
-          where: { id: user.id },
-          data: { isBetaUser: true, isWaitlisted: true },
-        });
-      }
-    },
-  },
-  providers: getProviders(),
+			if (
+				!env.NEXT_PUBLIC_IS_CLOUD ||
+				env.NODE_ENV === "development" ||
+				invitesAvailable
+			) {
+				await db.user.update({
+					where: { id: user.id },
+					data: { isBetaUser: true },
+				});
+			} else {
+				await db.user.update({
+					where: { id: user.id },
+					data: { isBetaUser: true, isWaitlisted: true },
+				});
+			}
+		},
+	},
+	providers: getProviders(),
 };
 
 /**
