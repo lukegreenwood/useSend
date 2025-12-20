@@ -1,4 +1,5 @@
 import { createVerify } from "crypto";
+import { logger } from "~/server/logger/log";
 import { SnsNotificationMessage } from "~/types/aws-types";
 
 // Cache certificates to avoid repeated fetches
@@ -113,14 +114,16 @@ export async function validateSnsSignature(
 ): Promise<boolean> {
 	try {
 		if (message.SignatureVersion !== "1") {
-			console.error(
-				`Unsupported SignatureVersion: ${message.SignatureVersion}`
-			);
+			logger.error({
+				msg: `Unsupported SignatureVersion: ${message.SignatureVersion}`,
+			});
 			return false;
 		}
 
 		if (!isValidCertUrl(message.SigningCertURL)) {
-			console.error(`Invalid SigningCertURL: ${message.SigningCertURL}`);
+			logger.error({
+				msg: `Invalid SigningCertURL: ${message.SigningCertURL}`,
+			});
 			return false;
 		}
 
@@ -135,7 +138,7 @@ export async function validateSnsSignature(
 
 		return verifier.verify(certificate, signature);
 	} catch (error) {
-		console.error("Error validating SNS signature:", error);
+		logger.error({ err: error, msg: "Error validating SNS signature" });
 		return false;
 	}
 }
