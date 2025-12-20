@@ -15,7 +15,6 @@ services:
     volumes:
       - "usesend-postgres-data:/var/lib/postgresql/data"
   usesend:
-    dockerfile: docker/Dockerfile
     build:
       context: .
       dockerfile: docker/Dockerfile
