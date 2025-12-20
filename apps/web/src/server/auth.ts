@@ -1,6 +1,7 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import {
 	getServerSession,
+	User,
 	type DefaultSession,
 	type NextAuthOptions,
 } from "next-auth";
@@ -110,10 +111,7 @@ function getProviders() {
 					id: profile.sub,
 					name: profile.name,
 					email: profile.email,
-					isBetaUser: false,
-					isAdmin: false,
-					isWaitlisted: false,
-				};
+				} as User;
 			},
 		});
 	}
