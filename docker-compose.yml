@@ -32,6 +32,9 @@ services:
     restart: unless-stopped
     depends_on:
       - postgres
+    volumes:
+      - ./data/certs/key.pem:/data/certs/key.pem:ro
+      - ./data/certs/cert.pem:/data/certs/cert.pem:ro
   usesend:
     build:
       context: .
