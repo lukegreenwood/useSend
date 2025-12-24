@@ -16,8 +16,8 @@ services:
       - "usesend-postgres-data:/var/lib/postgresql/data"
   smtp-server:
     build:
-      context: .
-      dockerfile: apps/smtp-server/Dockerfile
+      context: apps/smtp-server
+      dockerfile: Dockerfile
     environment:
       - "SMTP_AUTH_USERNAME:${SMTP_AUTH_USERNAME:?}"
       - "USESEND_BASE_URL:${USESEND_BASE_URL:?}"
@@ -37,7 +37,7 @@ services:
       - /data/coolify/certs/*.dev.gigantic.engineering/cert.pem:/data/certs/cert.pem:ro
   usesend:
     build:
-      context: apps/smtp-server
+      context: .
       dockerfile: docker/Dockerfile
     expose:
       - 3000
