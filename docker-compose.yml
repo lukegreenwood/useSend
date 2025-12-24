@@ -14,6 +14,24 @@ services:
       retries: 10
     volumes:
       - "usesend-postgres-data:/var/lib/postgresql/data"
+  smtp-server:
+    build:
+      context: .
+      dockerfile: apps/smtp-server/Dockerfile
+    environment:
+      - "SMTP_AUTH_USERNAME:${SMTP_AUTH_USERNAME:?}"
+      - "USESEND_BASE_URL:${USESEND_BASE_URL:?}"
+      - "USESEND_API_KEY_PATH:${USESEND_API_KEY_PATH:-/data/certs/key.pem}"
+      - "USESEND_API_CERT_PATH:${USESEND_API_CERT_PATH:-/data/certs/cert.pem}"
+    ports:
+      - 25:25
+      - 587:587
+      - 2587:2587
+      - 465:465
+      - 2465:2465
+    restart: unless-stopped
+    depends_on:
+      - postgres
   usesend:
     build:
       context: .
