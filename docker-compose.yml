@@ -37,7 +37,7 @@ services:
       - /data/coolify/certs/*.dev.gigantic.engineering/cert.pem:/data/certs/cert.pem:ro
   usesend:
     build:
-      context: .
+      context: apps/smtp-server
       dockerfile: docker/Dockerfile
     expose:
       - 3000
