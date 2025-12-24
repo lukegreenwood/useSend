@@ -33,8 +33,7 @@ services:
     depends_on:
       - postgres
     volumes:
-      - /data/coolify/certs/*.dev.gigantic.engineering/key.pem:/data/certs/key.pem:ro
-      - /data/coolify/certs/*.dev.gigantic.engineering/cert.pem:/data/certs/cert.pem:ro
+      - /data/coolify/certs/*.dev.gigantic.engineering:/data/certs:ro
   usesend:
     build:
       context: .
