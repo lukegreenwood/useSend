@@ -69,7 +69,6 @@ export class UnsendApiError extends HTTPException {
 		code: z.infer<typeof ErrorCode>;
 		message: string;
 	}) {
-		logger.error({ code, message }, "UnsendApiError");
 		super(codeToStatus(code), { message });
 		this.code = code;
 	}
