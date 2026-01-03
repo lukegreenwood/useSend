@@ -14,8 +14,8 @@ services:
       retries: 10
     volumes:
       - "usesend-postgres-data:/var/lib/postgresql/data"
-    expose:
-      - 5432
+    ports:
+      - "5432:5432"
   smtp-server:
     build:
       context: apps/smtp-server
