@@ -1,19 +1,19 @@
 services:
-  postgres:
-    image: "postgres:16"
-    environment:
-      - "POSTGRES_USER=${SERVICE_USER_POSTGRES}"
-      - "POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}"
-      - "POSTGRES_DB=${SERVICE_DB_POSTGRES:-usesend}"
-    healthcheck:
-      test:
-        - CMD-SHELL
-        - "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
-      interval: 5s
-      timeout: 20s
-      retries: 10
-    volumes:
-      - "usesend-postgres-data:/var/lib/postgresql/data"
+  # postgres:
+  #   image: "postgres:16"
+  #   environment:
+  #     - "POSTGRES_USER=${SERVICE_USER_POSTGRES}"
+  #     - "POSTGRES_PASSWORD=${SERVICE_PASSWORD_POSTGRES}"
+  #     - "POSTGRES_DB=${SERVICE_DB_POSTGRES:-usesend}"
+  #   healthcheck:
+  #     test:
+  #       - CMD-SHELL
+  #       - "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"
+  #     interval: 5s
+  #     timeout: 20s
+  #     retries: 10
+  #   volumes:
+  #     - "usesend-postgres-data:/var/lib/postgresql/data"
   smtp-server:
     build:
       context: apps/smtp-server
@@ -30,8 +30,6 @@ services:
       - 465:465
       - 2465:2465
     restart: unless-stopped
-    depends_on:
-      - postgres
     volumes:
       - /data/coolify/certs/*.dev.gigantic.engineering:/data/certs:ro
   usesend:
@@ -49,7 +47,7 @@ services:
       - "${LABEL_TRAEFIK_SNS_SERVICE}"
     environment:
       - SERVICE_URL_USESEND_3000
-      - "DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@postgres:5432/${SERVICE_DB_POSTGRES:-usesend}"
+      - "DATABASE_URL=postgresql://${SERVICE_USER_POSTGRES}:${SERVICE_PASSWORD_POSTGRES}@${SERVICE_HOST_POSTGRES}:${SERVICE_PORT_POSTGRES:-5432}/${SERVICE_DB_POSTGRES:-usesend}"
       - "NEXTAUTH_URL=${SERVICE_URL_USESEND}"
       - "NEXTAUTH_SECRET=${SERVICE_BASE64_64_NEXTAUTHSECRET}"
       - "AWS_ACCESS_KEY=${AWS_ACCESS_KEY:?}"
@@ -66,9 +64,6 @@ services:
       - "NEXT_PUBLIC_IS_CLOUD=${NEXT_PUBLIC_IS_CLOUD:-false}"
       - "API_RATE_LIMIT=${API_RATE_LIMIT:-1}"
       - HOSTNAME=0.0.0.0
-    depends_on:
-      postgres:
-        condition: service_healthy
     healthcheck:
       test:
         - CMD-SHELL
